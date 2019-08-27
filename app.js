@@ -16,7 +16,7 @@ app.use(Api.routes()); // Koa2 注册路由
 
 
 
-app.listen(80, function () {
+app.listen(88, function () {
     console.log("node 服务器已经启动！",new Date());
     //supervisor app.js  启动
 });

@@ -3,64 +3,35 @@
  * @description 专门运行爬虫抓取网站数据的的文件
  * @date  2019-08-24
  * 
- * 
- */
-
-const superagent = require("superagent");
+ * @ 下方是引进的依赖。
+ */ 
 const cheerio = require("cheerio");
-const  request =  require("request");
+const charset = require("superagent");
+const superagent = require("superagent-charset")(charset); //设置字符，可解决乱码的问题。
+const fs = require('fs');
+const request = require('request');
 
-//字符集gbk，gb2312中文乱码的解决方法  解码
-const iconv = require('iconv-lite')
+/** 
+*
+* @param        目标网址:  https://www.vipyl.com 
+* @description  爬取  雨露文章网的数据。
+* @date         2019-08-25 星期日
+*
+*/
 
-/*
- *执行函数请求
- * 
- */
 const runItme = function () {
     return new Promise((resolve, reject) => {
         let WebUrl = "https://www.vipyl.com";
-
         //定义接收的数据类型。
         let getDataArr = [];
         //请求目标网站数据
-        request({
-            url: WebUrl,
-            method: "GET",
-            // gzip:true,
-            encoding:null//获取的内容不编码，二进制
-        }, function(err, res, body) {
-            // console.log(response);
-            if (!err) {
-               
-                let strJson = iconv.decode(body,"gb2312"); //进行gbk解码
-                let $ = cheerio.load(strJson,{decodeEntities: false}); //解决Unicode 编码
-                
-                $(".tonglei #artadd").find("li").each(function(index,item){
-                    getDataArr.push({   
-                         title:$(this).find(".rightnr a").text(),
-                   //   description: $(this).find(".rightnr span").text().substring(0,$(this).find(".rightnr span").text().length-10) ,
-                   //      ImgUrl:WebUrl+$(this).find(".leftimg img").attr("src"),
-                  //    jumpUrl:WebUrl+$(this).find(".rightnr a").attr("href"),
-                     // Date:$(this).find(".rightnr span i").text(),
-                        
-                    })
-                });
-
-
-                resolve(getDataArr);
-            }
-        })    
-        
-        /*superagent.get(WebUrl).end( (err,res)=>{
+        superagent.get(WebUrl).charset("gbk").end( (err,res)=>{
             if(err){
                 console.log("爬取请求报错了...");
                 return
             }
-            let strJson = iconv.decode(res.text,"gb2312"); //进行gb2312解码
 
-            let $ = cheerio.load(strJson,{decodeEntities: false}); //解决Unicode 编码
-
+            let $ = cheerio.load(res.text,{decodeEntities: false}); //解决Unicode 编码
             //可以开始解析页面
            $(".tonglei").find(".rightnr a").each(function(index,item){
                 getDataArr.push({   //iconv.decode( $(this).text(),'gbk') //转码   
@@ -68,9 +39,9 @@ const runItme = function () {
                 })
             })
             console.log( getDataArr )
-            resolve("嘿嘿")
+            resolve(getDataArr)
         })
-        */
+        
     });
 }
 
@@ -125,19 +96,90 @@ const runItme = function () {
 
         });
 
-
     });
 
 
 
  }   
 
+/**
+ * @param  目标网址: https://mp.weixin.qq.com/s?__biz=MzAxNDE4NDA3Mg==&mid=2651263138&idx=1&sn=c79c0065fc2ad1d3e0a4e29bb26f94e6&chksm=80648b45b7130253c2b6b9c69979f1d6afac8a8463fdfdf23f9e1efa738c5de80f697fee48e0&mpshare=1&scene=23&srcid=&sharer_sharetime=1566869001416&sharer_shareid=0785ee0aecf5d943454373b4c58883fe#rd
+ * @description  爬取  图片的数据，下载到本地文件。
+ * 
+ */
+const DownloadImg = function(){
+    return new Promise( (resolve,reject)=>{
+        let targetUrl = "https://www.umei.cc/";
+        let imgs = [];//保存图片
+        superagent.get(targetUrl).end( (err,res)=>{
+                if(err){
+                    console.log("报错，返回",err);
+                    return
+                }         
+                let $ = cheerio.load(res.text); //解决Unicode 编码
+                $("body img").each( function(index,item){
+                   
+                     imgs.push({ imgUrl: $(this).attr("src"), 
+                                index:index
+                     })
+                 
+                });
+                console.log(imgs)
+                resolve(imgs)
+                
+                //存放数据
+               mkdir('./imgs',downloadImg,imgs); 
 
+        });
+        
+    });
+    /**
+     * 创建文件的目录
+     * 
+     */
+    function mkdir(_path,callback,_ImgDataArr){
 
+        if(fs.existsSync(_path)){
+            
+            console.log(`${_path}目录已存在`)
+
+        }else{
+            fs.mkdir(_path,(error)=>{
+                if(error){
+                    return console.log(`创建${_path}目录失败`);
+                }
+                console.log(`创建${_path}目录成功`)
+            })
+        }
+        
+        callback(_ImgDataArr); //没有生成指定目录不会执行
+        
+    } 
+
+    //下载爬到的图片
+    function downloadImg(imgs) {
+            imgs.forEach((_imgUrl,index) => {
+             //   console.log(_imgUrl.imgUrl)
+            //获取图片名 
+             let imgName = _imgUrl.imgUrl.split('/').pop();
+            
+            //下载图片存放到指定目录
+            console.log("");
+            let stream = fs.createWriteStream(`./imgs/${imgName}`);
+        
+            let req = request.get(_imgUrl.imgUrl); //响应流
+        
+            req.pipe(stream);
+            console.log(`开始下载图片${_imgUrl.imgUrl} --> ./imgs/${_imgUrl.imgUrl.split('/').pop()}`);     
+        });
+    }
+
+}
 
 
 //把模块推出暴露，让逻辑页面引用。
 module.exports = {
-   // runSpider: runItme
-   runSpider:GetHeadlinesData
+   //runSpider: runItme
+   //runSpider:GetHeadlinesData
+   runSpider:DownloadImg
 }
