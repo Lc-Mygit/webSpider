@@ -11,6 +11,9 @@ const superagent = require("superagent-charset")(charset); //设置字符，可�
 const fs = require('fs');
 const request = require('request');
 const schedule = require('node-schedule');  //定时任务
+const socket = require("../webSocket/serverSocket");
+
+
 /** 
 *
 * @param        目标网址:  https://www.vipyl.com 
@@ -37,7 +40,8 @@ const runItme = function () {
                   title:$(this).text()
                 })
             })
-            console.log( getDataArr )
+            console.log( getDataArr)
+           
             resolve(getDataArr)
         })
         
@@ -173,7 +177,7 @@ const DownloadImg = function(){
  * 
  */
 
-const IMsportsScore = function(){
+const IMsportsScore =  function(){
     return new Promise( (resolve,reject)=>{
         let WebUrl ="https://live.huanhuba.com/"; //https://live.611.com/zq
         let getArr=[];
@@ -188,31 +192,44 @@ const IMsportsScore = function(){
                 //console.log($(item).find(".league a").text(),index )   
                 getArr.push({
                         league:$(item).find(".league a").text().trim(), //赛事
-                        time:$(item).find(".time").text().trim().trim(),//比赛时间
+                        time:$(item).find(".time").text().trim(),//比赛时间
                         status:$(item).find(".status .time").text().trim(), //状态
                         homeTeam: $(item).find(".home .team-name").text().trim(), //主队
-                        homeScore: $(item).find(".playing .home-score").text().trim(), //主队比分
-                        awayScore: $(item).find(".playing .away-score").text().trim(), //客队比分
+                        homeScore: $(item).find(".playing .home-score").text().trim() ? $(item).find(".playing .home-score").text().trim():0, //主队比分
+                        awayScore:  $(item).find(".playing .home-score").text().trim() ? $(item).find(".playing .away-score").text().trim():0, //客队比分
                         awayTeam: $(item).find(".away .team-name").text().trim(), //主队  
                         
                 })
              });
-             console.log( getArr )
+           
             resolve(getArr);
+
         });
     });
 }
 
 
-const  scheduleCronstyle = function(){
+socket.on('connection', async (ws) => {
+    // 通过 ws 对象，就可以获取到客户端发送过来的信息和主动推送信息给客户端
+    schedule.scheduleJob('0-59 * * * * *',()=>{
+        //即时比分的运行
+        IMsportsScore().then( data=>{  
+            ws.send( JSON.stringify( data[0] ) ) // 每隔 1 秒给连接方报一次数  
+            //ws.close();
+        })
+       
+    })    
+})
+
+const  scheduleCronstyle =  function(){
     //每分钟的第30秒定时执行一次:
       schedule.scheduleJob('0-59 * * * * *',()=>{
-         IMsportsScore(); //即时比分的运行
-          console.log('scheduleCronstyle--------定时任务启动:' + new Date());
+       
+        //  console.log('scheduleCronstyle--------定时任务启动:' + new Date());
+       
       }); 
   }
   
-
 //把模块推出暴露，让逻辑页面引用。
 module.exports = {
    //runSpider: runItme
