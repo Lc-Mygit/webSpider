@@ -3,7 +3,7 @@ const router = new Router(); //实例化路由
 const mysql = require("../mysql/mysql");
 
 const getWebData = require("../runSpider/run"); //专门写爬虫的模块
-
+getWebData.schedule()//执行定时任务
 //执行向页面发送信息
 router.get("/", async (ctx, next) => {
     

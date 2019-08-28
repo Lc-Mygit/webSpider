@@ -10,7 +10,7 @@ const charset = require("superagent");
 const superagent = require("superagent-charset")(charset); //设置字符，可解决乱码的问题。
 const fs = require('fs');
 const request = require('request');
-
+const schedule = require('node-schedule');  //定时任务
 /** 
 *
 * @param        目标网址:  https://www.vipyl.com 
@@ -30,7 +30,6 @@ const runItme = function () {
                 console.log("爬取请求报错了...");
                 return
             }
-
             let $ = cheerio.load(res.text,{decodeEntities: false}); //解决Unicode 编码
             //可以开始解析页面
            $(".tonglei").find(".rightnr a").each(function(index,item){
@@ -91,15 +90,9 @@ const runItme = function () {
                }
               
             })
-           
             resolve(getDataArr)
-
         });
-
     });
-
-
-
  }   
 
 /**
@@ -117,17 +110,15 @@ const DownloadImg = function(){
                     return
                 }         
                 let $ = cheerio.load(res.text); //解决Unicode 编码
-                $("body img").each( function(index,item){
-                   
+                $("body img").each( function(index,item){ 
                      imgs.push({ imgUrl: $(this).attr("src"), 
                                 index:index
                      })
-                 
                 });
                 console.log(imgs)
                 resolve(imgs)
                 
-                //存放数据
+               //存放数据
                mkdir('./imgs',downloadImg,imgs); 
 
         });
@@ -149,10 +140,9 @@ const DownloadImg = function(){
                     return console.log(`创建${_path}目录失败`);
                 }
                 console.log(`创建${_path}目录成功`)
+                callback(_ImgDataArr); //没有生成指定目录不会执行
             })
         }
-        
-        callback(_ImgDataArr); //没有生成指定目录不会执行
         
     } 
 
@@ -176,10 +166,58 @@ const DownloadImg = function(){
 
 }
 
+/**
+ *@description 定时爬取数据 足球比分的数据， 
+ * 
+ *@param       目标网址:http://live.win007.com/
+ * 
+ */
+
+const IMsportsScore = function(){
+    return new Promise( (resolve,reject)=>{
+        let WebUrl ="https://live.huanhuba.com/"; //https://live.611.com/zq
+        let getArr=[];
+        superagent.get(WebUrl).end( (err,res)=>{
+            if(err){
+                console.log("请求体育比分出现报错了")
+                return
+            }
+            //console.log( res.text )
+            let $ = cheerio.load(res.text);
+            $(".match-table").find(".match-content-item").each( (index,item)=>{
+                //console.log($(item).find(".league a").text(),index )   
+                getArr.push({
+                        league:$(item).find(".league a").text().trim(), //赛事
+                        time:$(item).find(".time").text().trim().trim(),//比赛时间
+                        status:$(item).find(".status .time").text().trim(), //状态
+                        homeTeam: $(item).find(".home .team-name").text().trim(), //主队
+                        homeScore: $(item).find(".playing .home-score").text().trim(), //主队比分
+                        awayScore: $(item).find(".playing .away-score").text().trim(), //客队比分
+                        awayTeam: $(item).find(".away .team-name").text().trim(), //主队  
+                        
+                })
+             });
+             console.log( getArr )
+            resolve(getArr);
+        });
+    });
+}
+
+
+const  scheduleCronstyle = function(){
+    //每分钟的第30秒定时执行一次:
+      schedule.scheduleJob('0-59 * * * * *',()=>{
+         IMsportsScore(); //即时比分的运行
+          console.log('scheduleCronstyle--------定时任务启动:' + new Date());
+      }); 
+  }
+  
 
 //把模块推出暴露，让逻辑页面引用。
 module.exports = {
    //runSpider: runItme
    //runSpider:GetHeadlinesData
-   runSpider:DownloadImg
+  // runSpider:DownloadImg,
+   runSpider:IMsportsScore,
+   schedule:scheduleCronstyle
 }
