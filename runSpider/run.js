@@ -230,8 +230,10 @@ Date.prototype.Format = function (fmt) {
     return fmt;
 }
 const finishScore = function(){
+   
     return new Promise( (resolve,reject)=>{
-        let webUrl = "https://free.leisu.com/wanchang?time=20190828&width=720&theme=red";
+        let today = new Date().Format('yyyyMMdd'); //当天的时间 
+        let webUrl = "https://free.leisu.com/wanchang?time=20190829"//+today;
         superagent.get(webUrl).end( (err,res)=>{
             if(err){
                 console.log("请求获取完场比分 报错了");
@@ -241,14 +243,14 @@ const finishScore = function(){
             let getArr =[]; //临时存储数据
             $(".layout-grid-list li").each( function(index,item){
                 let TempArr=[];
-               // TempArr.push( $(item).find(".event-icon").attr("style") )
+                TempArr.push( $(item).find(".event-icon").attr("style").trim() )
                 TempArr.push( $(item).find(".event-name").text().trim() )
-                TempArr.push( "2019-08-28 "+$(item).find(".lab-time").text().trim()+"00" )
+                TempArr.push( $(item).find(".lab-time").text().trim())
                 TempArr.push($(item).find(".lab-team-home .name").text().trim() )
                 TempArr.push( $(item).find(".lab-score .score").text().trim()[0].trim() )
                 TempArr.push( $(item).find(".lab-score .score").text().trim()[2].trim() )
                 TempArr.push( $(item).find(".lab-team-away .name").text().trim() )
-                TempArr.push( new Date().Format('yyyy-MM-dd')  )
+              
 
                 getArr.push({
                     league_img:$(item).find(".event-icon").attr("style"),
@@ -260,9 +262,12 @@ const finishScore = function(){
                     awayTeam:$(item).find(".lab-team-away .name").text().trim(),
                     entry_time:new Date().Format('yyyy-MM-dd') 
                 })
-                console.log( TempArr )
-                let addSql = 'INSERT INTO end_footballscore(league,playTime,homeTeam,homeTeam_score,awayTeam_score,awayTeam,entry_time) VALUES (?,?,?,?,?,?,?)';
-                mysql.query(addSql,TempArr)
+              
+
+               
+               let addSql = 'INSERT INTO end_footballscore(league_img,league,playTime,homeTeam,homeTeam_score,awayTeam_score,awayTeam) VALUES (?,?,?,?,?,?,?)';
+              //let addSql = "SELECT * FROM end_footballscore";
+               mysql.query(addSql,TempArr)
                
             });
            //console.log(getArr)

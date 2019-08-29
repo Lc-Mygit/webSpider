@@ -7,12 +7,12 @@ const getWebData = require("../runSpider/run"); //专门写爬虫的模块
 //执行向页面发送信息
 router.get("/", async (ctx, next) => {
     
-   // let reslut =  await mysql.query("SELECT * FROM end_footballscore");
+    let reslut = await mysql.query("SELECT * FROM end_footballscore");
     let WebData = await getWebData.finishScore();
     ctx.response.body =  {
         status:true,
         message:"成功爬取内容",
-        data:WebData
+        data:reslut
     } 
 
 });
