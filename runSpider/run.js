@@ -13,6 +13,7 @@ const request = require('request');
 const schedule = require('node-schedule');  //定时任务
 const socket = require("../webSocket/serverSocket");
 
+const mysql = require("../mysql/mysql"); //引进数据库
 
 /** 
 *
@@ -198,7 +199,6 @@ const IMsportsScore =  function(){
                         homeScore: $(item).find(".playing .home-score").text().trim() ? $(item).find(".playing .home-score").text().trim():0, //主队比分
                         awayScore:  $(item).find(".playing .home-score").text().trim() ? $(item).find(".playing .away-score").text().trim():0, //客队比分
                         awayTeam: $(item).find(".away .team-name").text().trim(), //主队  
-                        
                 })
              });
            
@@ -208,8 +208,74 @@ const IMsportsScore =  function(){
     });
 }
 
+/***
+ * @description 获取 足球完场比分入库。
+ * @parma       目标网站:https://free.leisu.com/wanchang?time=20190828&width=720&theme=red
+ * 
+ * */
+//自定义当前时间对象
+Date.prototype.Format = function (fmt) {
+    var o = {
+        "M+": this.getMonth() + 1, //月份
+        "d+": this.getDate(), //日
+        "H+": this.getHours(), //小时
+        "m+": this.getMinutes(), //分
+        "s+": this.getSeconds(), //秒
+        "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+        "S": this.getMilliseconds() //毫秒
+    };
+    if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+    for (var k in o)
+        if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+    return fmt;
+}
+const finishScore = function(){
+    return new Promise( (resolve,reject)=>{
+        let webUrl = "https://free.leisu.com/wanchang?time=20190828&width=720&theme=red";
+        superagent.get(webUrl).end( (err,res)=>{
+            if(err){
+                console.log("请求获取完场比分 报错了");
+                return
+            }
+            let $ = cheerio.load(res.text);
+            let getArr =[]; //临时存储数据
+            $(".layout-grid-list li").each( function(index,item){
+                let TempArr=[];
+               // TempArr.push( $(item).find(".event-icon").attr("style") )
+                TempArr.push( $(item).find(".event-name").text().trim() )
+                TempArr.push( "2019-08-28 "+$(item).find(".lab-time").text().trim()+"00" )
+                TempArr.push($(item).find(".lab-team-home .name").text().trim() )
+                TempArr.push( $(item).find(".lab-score .score").text().trim()[0].trim() )
+                TempArr.push( $(item).find(".lab-score .score").text().trim()[2].trim() )
+                TempArr.push( $(item).find(".lab-team-away .name").text().trim() )
+                TempArr.push( new Date().Format('yyyy-MM-dd')  )
 
-socket.on('connection', async (ws) => {
+                getArr.push({
+                    league_img:$(item).find(".event-icon").attr("style"),
+                    league:$(item).find(".event-name").text().trim(),
+                    playTime: $(item).find(".lab-time").text().trim(),
+                    homeTeam:$(item).find(".lab-team-home .name").text().trim(),  
+                    homeTeam_score: $(item).find(".lab-score .score").text().trim()[0],
+                    awayTeam_score: $(item).find(".lab-score .score").text().trim()[2],
+                    awayTeam:$(item).find(".lab-team-away .name").text().trim(),
+                    entry_time:new Date().Format('yyyy-MM-dd') 
+                })
+                console.log( TempArr )
+                let addSql = 'INSERT INTO end_footballscore(league,playTime,homeTeam,homeTeam_score,awayTeam_score,awayTeam,entry_time) VALUES (?,?,?,?,?,?,?)';
+                mysql.query(addSql,TempArr)
+               
+            });
+           //console.log(getArr)
+           
+
+            resolve(getArr)
+        });
+    });
+}
+
+
+
+socket.on('connection', (ws) => {
     // 通过 ws 对象，就可以获取到客户端发送过来的信息和主动推送信息给客户端
     schedule.scheduleJob('0-59 * * * * *',()=>{
         //即时比分的运行
@@ -236,5 +302,6 @@ module.exports = {
    //runSpider:GetHeadlinesData
   // runSpider:DownloadImg,
    runSpider:IMsportsScore,
-   schedule:scheduleCronstyle
+   schedule:scheduleCronstyle,
+   finishScore:finishScore
 }
