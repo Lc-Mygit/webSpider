@@ -12,7 +12,7 @@ const Mysql_config = require("./mysql_config"); //配置
 
 //封装、暴露方法
 module.exports  = {
-    query:function( sql,params){
+    query:function(sql,params){
         //每次使用的时候需要创建数据库链接， 完成操作之后要关闭连接。  
         let connection = mysql.createConnection(Mysql_config);
 

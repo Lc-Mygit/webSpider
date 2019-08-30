@@ -252,7 +252,7 @@ const finishScore = function(){
                 TempArr.push( $(item).find(".lab-team-away .name").text().trim() )
               
 
-                getArr.push({
+               /* getArr.push({
                     league_img:$(item).find(".event-icon").attr("style"),
                     league:$(item).find(".event-name").text().trim(),
                     playTime: $(item).find(".lab-time").text().trim(),
@@ -261,22 +261,18 @@ const finishScore = function(){
                     awayTeam_score: $(item).find(".lab-score .score").text().trim()[2],
                     awayTeam:$(item).find(".lab-team-away .name").text().trim(),
                     entry_time:new Date().Format('yyyy-MM-dd') 
-                })
-              
-
-               
-               let addSql = 'INSERT INTO end_footballscore(league_img,league,playTime,homeTeam,homeTeam_score,awayTeam_score,awayTeam) VALUES (?,?,?,?,?,?,?)';
-              //let addSql = "SELECT * FROM end_footballscore";
-               mysql.query(addSql,TempArr)
-               
+                })*/
+                getArr.push( TempArr );       
             });
            //console.log(getArr)
-           
+        
 
             resolve(getArr)
         });
     });
 }
+0-2
+
 
 
 
