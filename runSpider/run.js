@@ -242,15 +242,21 @@ const finishScore = function(){
             let $ = cheerio.load(res.text);
             let getArr =[]; //临时存储数据
             $(".layout-grid-list li").each( function(index,item){
+                let score =  $(item).find(".lab-score .score").text().trim().trim().split("-");   //格式化进球数
+                //格式化赛事图标
+                let ImgurlStr = "http:"+ $(item).find(".event-icon").attr("style").trim().substring( ($(item).find(".event-icon").attr("style").trim().indexOf("(")+1), $(item).find(".event-icon").attr("style").trim().indexOf(")")) ;              
+                
+
                 let TempArr=[];
-                TempArr.push( $(item).find(".event-icon").attr("style").trim() )
+                TempArr.push( ImgurlStr )
                 TempArr.push( $(item).find(".event-name").text().trim() )
+                TempArr.push("2019-08-29")
                 TempArr.push( $(item).find(".lab-time").text().trim())
                 TempArr.push($(item).find(".lab-team-home .name").text().trim() )
-                TempArr.push( $(item).find(".lab-score .score").text().trim()[0].trim() )
-                TempArr.push( $(item).find(".lab-score .score").text().trim()[2].trim() )
-                TempArr.push( $(item).find(".lab-team-away .name").text().trim() )
-              
+                TempArr.push( score[0])
+                TempArr.push( score[1])
+                TempArr.push(  $(item).find(".lab-team-away .name").text().trim()  ) 
+                TempArr.push(new Date().Format('yyyy-MM-dd HH:mm:ss'))
 
                /* getArr.push({
                     league_img:$(item).find(".event-icon").attr("style"),
@@ -262,10 +268,12 @@ const finishScore = function(){
                     awayTeam:$(item).find(".lab-team-away .name").text().trim(),
                     entry_time:new Date().Format('yyyy-MM-dd') 
                 })*/
-                getArr.push( TempArr );       
+                getArr.push( TempArr );     
+                  
             });
            //console.log(getArr)
-        
+         
+         
 
             resolve(getArr)
         });

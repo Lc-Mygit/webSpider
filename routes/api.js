@@ -8,25 +8,46 @@ const getWebData = require("../runSpider/run"); //专门写爬虫的模块
 router.get("/", async (ctx, next) => {
     
     
-    //let res = await mysql.query("truncate table end_footballscore");
+    await mysql.query("truncate table end_footballscore");
     let WebData = await getWebData.finishScore();
-    await mysql.query("truncate table end_footballscore")
-    WebData.forEach( function(item){ 
-        let addSql = 'INSERT INTO end_footballscore(league_img,league,playTime,homeTeam,homeTeam_score,awayTeam_score,awayTeam) VALUES (?,?,?,?,?,?,?)';
+  //  await mysql.query("truncate table end_footballscore");
+  //  WebData.forEach(  async item=>{ 
+      
         
-        mysql.query(addSql,item);
-    });
-
-    let reslut = await mysql.query("SELECT * FROM end_footballscore");
-    
+  //  });
+  let addSql = "INSERT INTO end_footballscore(`league_img`,`league`,`matchDate`,`playTime`,`homeTeam`,`homeTeam_score`,`awayTeam_score`,`awayTeam`,`createTime`) VALUES ?";
+   mysql.query(addSql,[WebData]);
+  
+  // let reslut = await mysql.query("SELECT * FROM end_footballscore");
+  // console.log(reslut)
 
     ctx.response.body =  {
         status:true,
         message:"成功爬取内容",
-        data:reslut//WebData
+        data:WebData
     } 
    
     
 });
+
+
+//自定义当前时间对象的方法
+Date.prototype.Format = function (fmt) {
+    var o = {
+        "M+": this.getMonth() + 1, //月份
+        "d+": this.getDate(), //日
+        "H+": this.getHours(), //小时
+        "m+": this.getMinutes(), //分
+        "s+": this.getSeconds(), //秒
+        "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+        "S": this.getMilliseconds() //毫秒
+    };
+    if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+    for (var k in o)
+        if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+    return fmt;
+    // 用法 new Date().Format('yyyy-MM-dd HH:mm:ss'); //当天的时间 
+}
+
 
 module.exports = router;
