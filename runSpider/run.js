@@ -233,7 +233,7 @@ const finishScore = function(){
    
     return new Promise( (resolve,reject)=>{
         let today = new Date().Format('yyyyMMdd'); //当天的时间 
-        let webUrl = "https://free.leisu.com/wanchang?time=20190829"//+today;
+        let webUrl = "https://free.leisu.com/wanchang?time=20190819"//+today;
         superagent.get(webUrl).end( (err,res)=>{
             if(err){
                 console.log("请求获取完场比分 报错了");
@@ -250,12 +250,19 @@ const finishScore = function(){
                 let TempArr=[];
                 TempArr.push( ImgurlStr )
                 TempArr.push( $(item).find(".event-name").text().trim() )
-                TempArr.push("2019-08-29")
+                TempArr.push("2019-08-19")
                 TempArr.push( $(item).find(".lab-time").text().trim())
                 TempArr.push($(item).find(".lab-team-home .name").text().trim() )
                 TempArr.push( score[0])
                 TempArr.push( score[1])
                 TempArr.push(  $(item).find(".lab-team-away .name").text().trim()  ) 
+                //主队 客队红牌数
+                TempArr.push(  $(item).find(".lab-team-home .homeredcards").text().trim()  )
+                TempArr.push(  $(item).find(".lab-team-away .awayredcards").text().trim()  )
+                 //主队 客队黄牌数
+                TempArr.push(  $(item).find(".lab-team-home .homeyellowcards").text().trim()  )
+                TempArr.push(  $(item).find(".lab-team-away .awayyellowcards").text().trim()  )
+
                 TempArr.push(new Date().Format('yyyy-MM-dd HH:mm:ss'))
 
                /* getArr.push({

@@ -7,24 +7,25 @@ const getWebData = require("../runSpider/run"); //专门写爬虫的模块
 //执行向页面发送信息
 router.get("/", async (ctx, next) => {
     
-    
-    await mysql.query("truncate table end_footballscore");
+  // await mysql.query("truncate table end_footballscore");
     let WebData = await getWebData.finishScore();
-  //  await mysql.query("truncate table end_footballscore");
-  //  WebData.forEach(  async item=>{ 
-      
-        
-  //  });
-  let addSql = "INSERT INTO end_footballscore(`league_img`,`league`,`matchDate`,`playTime`,`homeTeam`,`homeTeam_score`,`awayTeam_score`,`awayTeam`,`createTime`) VALUES ?";
-   mysql.query(addSql,[WebData]);
-  
-  // let reslut = await mysql.query("SELECT * FROM end_footballscore");
-  // console.log(reslut)
+
+    let Isjudge = await mysql.query("SELECT * FROM end_footballscore WHERE matchDate=' "+ WebData[0][2]+" '");
+    
+    if( Isjudge.length == 0){
+     
+        let addSql = "INSERT INTO end_footballscore(`league_img`,`league`,`matchDate`,`playTime`,`homeTeam`,`homeTeam_score`,`awayTeam_score`,`awayTeam`,`home_redCard`,`away_redCard`,`home_yellowCard`,`away_yellowCard`,`createTime`) VALUES ?";
+        await mysql.query(addSql,[WebData]);
+        console.log("把数据添加到数据了..")
+    }
+
+   let reslut = await mysql.query("SELECT * FROM end_footballscore");
+   console.log("成功入库了")
 
     ctx.response.body =  {
         status:true,
         message:"成功爬取内容",
-        data:WebData
+        data:reslut
     } 
    
     
