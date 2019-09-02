@@ -232,8 +232,9 @@ Date.prototype.Format = function (fmt) {
 const finishScore = function(){
    
     return new Promise( (resolve,reject)=>{
-        let today = new Date().Format('yyyyMMdd'); //当天的时间 
-        let webUrl = "https://free.leisu.com/wanchang?time=20190819"//+today;
+       
+        let today = new Date(new Date().getTime() - 24*60*60*1000).Format('yyyyMMdd'); //昨天的时间 
+        let webUrl = "https://free.leisu.com/wanchang?time="+today//+today;
         superagent.get(webUrl).end( (err,res)=>{
             if(err){
                 console.log("请求获取完场比分 报错了");
@@ -242,6 +243,7 @@ const finishScore = function(){
             let $ = cheerio.load(res.text);
             let getArr =[]; //临时存储数据
             $(".layout-grid-list li").each( function(index,item){
+               
                 let score =  $(item).find(".lab-score .score").text().trim().trim().split("-");   //格式化进球数
                 //格式化赛事图标
                 let ImgurlStr = "http:"+ $(item).find(".event-icon").attr("style").trim().substring( ($(item).find(".event-icon").attr("style").trim().indexOf("(")+1), $(item).find(".event-icon").attr("style").trim().indexOf(")")) ;              
@@ -250,7 +252,7 @@ const finishScore = function(){
                 let TempArr=[];
                 TempArr.push( ImgurlStr )
                 TempArr.push( $(item).find(".event-name").text().trim() )
-                TempArr.push("2019-08-19")
+                TempArr.push( new Date( Number( $(this).attr("data-nowtime") )*1000 ).Format('yyyy-MM-dd') );         
                 TempArr.push( $(item).find(".lab-time").text().trim())
                 TempArr.push($(item).find(".lab-team-home .name").text().trim() )
                 TempArr.push( score[0])
@@ -278,11 +280,9 @@ const finishScore = function(){
                 getArr.push( TempArr );     
                   
             });
-           //console.log(getArr)
+        
          
-         
-
-            resolve(getArr)
+            resolve(getArr);
         });
     });
 }
@@ -303,12 +303,28 @@ socket.on('connection', (ws) => {
     })    
 })
 
+//这里是执行 定时 爬取页面的数据，然后判断 入数据库。
 const  scheduleCronstyle =  function(){
     //每分钟的第30秒定时执行一次:
-      schedule.scheduleJob('0-59 * * * * *',()=>{
+      schedule.scheduleJob('30 30 22 * * *', async ()=>{
+      
+          let WebData = await finishScore();  
+          let Isjudge = await mysql.query("SELECT * FROM end_footballscore WHERE matchDate=' "+new Date( new Date().getTime() - 24*60*60*1000 ).Format('yyyy-MM-dd')+" '"); 
+          
+          if( Isjudge.length == 0 ){ 
+                let addSql = "INSERT INTO end_footballscore(`league_img`,`league`,`matchDate`,`playTime`,`homeTeam`,`homeTeam_score`,`awayTeam_score`,`awayTeam`,`home_redCard`,`away_redCard`,`home_yellowCard`,`away_yellowCard`,`createTime`) VALUES ?";
+                await mysql.query(addSql,[WebData]);
+
+                console.log("定时任务===>",new Date().Format('yyyy-MM-dd HH:mm:ss'),"成功入库...");    
+          }     
+          
+           
+
+        //console.log(   new Date( new Date().getTime() - 24*60*60*1000 ).Format('yyyy-MM-dd HH:mm:ss')  )
        
-        //  console.log('scheduleCronstyle--------定时任务启动:' + new Date());
-       
+        console.log('scheduleCronstyle--------定时任务启动:' + new Date().Format('yyyy-MM-dd HH:mm:ss') );
+        
+
       }); 
   }
   

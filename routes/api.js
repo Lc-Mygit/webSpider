@@ -3,21 +3,16 @@ const router = new Router(); //实例化路由
 const mysql = require("../mysql/mysql");
 
 const getWebData = require("../runSpider/run"); //专门写爬虫的模块
-//getWebData.schedule()//执行定时任务
+getWebData.schedule()//执行定时任务
 //执行向页面发送信息
 router.get("/", async (ctx, next) => {
     
   // await mysql.query("truncate table end_footballscore");
-    let WebData = await getWebData.finishScore();
+  //  let WebData = await getWebData.finishScore();
 
-    let Isjudge = await mysql.query("SELECT * FROM end_footballscore WHERE matchDate=' "+ WebData[0][2]+" '");
+    //let Isjudge = await mysql.query("SELECT * FROM end_footballscore WHERE matchDate=' "+ WebData[0][2]+" '");
     
-    if( Isjudge.length == 0){
-     
-        let addSql = "INSERT INTO end_footballscore(`league_img`,`league`,`matchDate`,`playTime`,`homeTeam`,`homeTeam_score`,`awayTeam_score`,`awayTeam`,`home_redCard`,`away_redCard`,`home_yellowCard`,`away_yellowCard`,`createTime`) VALUES ?";
-        await mysql.query(addSql,[WebData]);
-        console.log("把数据添加到数据了..")
-    }
+ 
 
    let reslut = await mysql.query("SELECT * FROM end_footballscore");
    console.log("成功入库了")
