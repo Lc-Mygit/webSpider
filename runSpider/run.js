@@ -208,101 +208,6 @@ const IMsportsScore =  function(){
     });
 }
 
-/***
- * @description 获取 足球完场比分入库。
- * @parma       目标网站:https://free.leisu.com/wanchang?time=20190828&width=720&theme=red
- * 
- * */
-//自定义当前时间对象
-Date.prototype.Format = function (fmt) {
-    var o = {
-        "M+": this.getMonth() + 1, //月份
-        "d+": this.getDate(), //日
-        "H+": this.getHours(), //小时
-        "m+": this.getMinutes(), //分
-        "s+": this.getSeconds(), //秒
-        "q+": Math.floor((this.getMonth() + 3) / 3), //季度
-        "S": this.getMilliseconds() //毫秒
-    };
-    if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
-    for (var k in o)
-        if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
-    return fmt;
-}
-const finishScore =  function(){
-   
-    return new Promise( (resolve,reject)=>{
-       
-        let today = new Date(new Date().getTime() - 24*60*60*1000).Format('yyyyMMdd'); //昨天的时间 
-        let webUrl = "https://free.leisu.com/wanchang?time="+today//+today;
-        superagent.get(webUrl).end( (err,res)=>{
-            if(err){
-                console.log("请求获取完场比分 报错了");
-                return
-            }
-            let $ = cheerio.load(res.text);
-            let getArr =[]; //临时存储数据
-            $(".layout-grid-list li").each( function(index,item){
-               
-                let score =  $(item).find(".lab-score .score").text().trim().trim().split("-");   //格式化进球数
-                //格式化赛事图标
-                let ImgurlStr = "http:"+ $(item).find(".event-icon").attr("style").trim().substring( ($(item).find(".event-icon").attr("style").trim().indexOf("(")+1), $(item).find(".event-icon").attr("style").trim().indexOf(")")) ;              
-                
-
-                let TempArr=[];
-                TempArr.push( ImgurlStr )
-                TempArr.push( $(item).find(".event-name").text().trim() )
-                TempArr.push( new Date( Number( $(this).attr("data-nowtime") )*1000 ).Format('yyyy-MM-dd') ); //昨天        
-                TempArr.push( $(item).find(".lab-time").text().trim())
-                TempArr.push($(item).find(".lab-team-home .name").text().trim() )
-                TempArr.push( score[0])
-                TempArr.push( score[1])
-                TempArr.push(  $(item).find(".lab-team-away .name").text().trim()  ) 
-                //主队 客队红牌数
-                TempArr.push(  $(item).find(".lab-team-home .homeredcards").text().trim()  )
-                TempArr.push(  $(item).find(".lab-team-away .awayredcards").text().trim()  )
-                 //主队 客队黄牌数
-                TempArr.push(  $(item).find(".lab-team-home .homeyellowcards").text().trim()  )
-                TempArr.push(  $(item).find(".lab-team-away .awayyellowcards").text().trim()  )
-                TempArr.push( new Date().Format('yyyy-MM-dd HH:mm:ss'))
-            
-            //写判断逻辑，判断数据库是否重复的数据。    
-             mysql.query("SELECT * FROM end_footballscore WHERE matchDate=' "+new Date( Number( $(this).attr("data-nowtime") )*1000 ).Format('yyyy-MM-dd')+" '")
-             .then(Arr=>{
-                    if(Arr.length > 0){
-                        Arr.forEach( (itemArr,index)=>{
-                            let flag = false;
-                            itemArr.forEach( item=>{
-                                TempArr.forEach(Tempitem=>{
-                                    if(item === Tempitem){
-                                        flag = true;
-                                    }else{
-                                        flag = false;
-                                    }
-                                });
-                            })
-                            if(!flag){
-                              getArr.push(TempArr);    
-                            }
-                        });
-                    }else{
-                        getArr.push(TempArr);    
-                    }
-                    resolve(getArr); 
-             });     
-               
-                       
-            });
-        
-         
-           
-        });
-    });
-}
-
-
-
-
 
 socket.on('connection', (ws) => {
     // 通过 ws 对象，就可以获取到客户端发送过来的信息和主动推送信息给客户端
@@ -316,41 +221,12 @@ socket.on('connection', (ws) => {
     })    
 })
 
-//这里是执行 定时 爬取页面的数据，然后判断 入数据库。
-const  scheduleCronstyle =  function(){
-    //每分钟的第30秒定时执行一次:
-      schedule.scheduleJob('30 30 22 * * *', async ()=>{
-      
-          let WebData = await finishScore();  
-        //  let Isjudge = await mysql.query("SELECT * FROM end_footballscore WHERE matchDate=' "+new Date( new Date().getTime() - 24*60*60*1000 ).Format('yyyy-MM-dd')+" '"); 
-          
-          //判断数据库中是否存在重复的数据
-          Isjudge.forEach( (itemArr,index)=>{
 
-          });  
-
-          if( Isjudge.length == 0 ){ 
-                let addSql = "INSERT INTO end_footballscore(`league_img`,`league`,`matchDate`,`playTime`,`homeTeam`,`homeTeam_score`,`awayTeam_score`,`awayTeam`,`home_redCard`,`away_redCard`,`home_yellowCard`,`away_yellowCard`,`createTime`) VALUES ?";
-                await mysql.query(addSql,[WebData]);
-                console.log("定时任务===>",new Date().Format('yyyy-MM-dd HH:mm:ss'),"成功入库...");    
-          }     
-          
-           
-
-        //console.log(   new Date( new Date().getTime() - 24*60*60*1000 ).Format('yyyy-MM-dd HH:mm:ss')  )
-       
-        console.log('scheduleCronstyle--------定时任务启动:' + new Date().Format('yyyy-MM-dd HH:mm:ss') );
-        
-
-      }); 
-  }
-  
 //把模块推出暴露，让逻辑页面引用。
 module.exports = {
    //runSpider: runItme
    //runSpider:GetHeadlinesData
   // runSpider:DownloadImg,
    runSpider:IMsportsScore,
-   schedule:scheduleCronstyle,
-   finishScore:finishScore
+
 }
