@@ -229,7 +229,7 @@ Date.prototype.Format = function (fmt) {
         if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
     return fmt;
 }
-const finishScore = function(){
+const finishScore =  function(){
    
     return new Promise( (resolve,reject)=>{
        
@@ -252,7 +252,7 @@ const finishScore = function(){
                 let TempArr=[];
                 TempArr.push( ImgurlStr )
                 TempArr.push( $(item).find(".event-name").text().trim() )
-                TempArr.push( new Date( Number( $(this).attr("data-nowtime") )*1000 ).Format('yyyy-MM-dd') );         
+                TempArr.push( new Date( Number( $(this).attr("data-nowtime") )*1000 ).Format('yyyy-MM-dd') ); //昨天        
                 TempArr.push( $(item).find(".lab-time").text().trim())
                 TempArr.push($(item).find(".lab-team-home .name").text().trim() )
                 TempArr.push( score[0])
@@ -264,29 +264,42 @@ const finishScore = function(){
                  //主队 客队黄牌数
                 TempArr.push(  $(item).find(".lab-team-home .homeyellowcards").text().trim()  )
                 TempArr.push(  $(item).find(".lab-team-away .awayyellowcards").text().trim()  )
-
-                TempArr.push(new Date().Format('yyyy-MM-dd HH:mm:ss'))
-
-               /* getArr.push({
-                    league_img:$(item).find(".event-icon").attr("style"),
-                    league:$(item).find(".event-name").text().trim(),
-                    playTime: $(item).find(".lab-time").text().trim(),
-                    homeTeam:$(item).find(".lab-team-home .name").text().trim(),  
-                    homeTeam_score: $(item).find(".lab-score .score").text().trim()[0],
-                    awayTeam_score: $(item).find(".lab-score .score").text().trim()[2],
-                    awayTeam:$(item).find(".lab-team-away .name").text().trim(),
-                    entry_time:new Date().Format('yyyy-MM-dd') 
-                })*/
-                getArr.push( TempArr );     
-                  
+                TempArr.push( new Date().Format('yyyy-MM-dd HH:mm:ss'))
+            
+            //写判断逻辑，判断数据库是否重复的数据。    
+             mysql.query("SELECT * FROM end_footballscore WHERE matchDate=' "+new Date( Number( $(this).attr("data-nowtime") )*1000 ).Format('yyyy-MM-dd')+" '")
+             .then(Arr=>{
+                    if(Arr.length > 0){
+                        Arr.forEach( (itemArr,index)=>{
+                            let flag = false;
+                            itemArr.forEach( item=>{
+                                TempArr.forEach(Tempitem=>{
+                                    if(item === Tempitem){
+                                        flag = true;
+                                    }else{
+                                        flag = false;
+                                    }
+                                });
+                            })
+                            if(!flag){
+                              getArr.push(TempArr);    
+                            }
+                        });
+                    }else{
+                        getArr.push(TempArr);    
+                    }
+                    resolve(getArr); 
+             });     
+               
+                       
             });
         
          
-            resolve(getArr);
+           
         });
     });
 }
-0-2
+
 
 
 
@@ -309,12 +322,16 @@ const  scheduleCronstyle =  function(){
       schedule.scheduleJob('30 30 22 * * *', async ()=>{
       
           let WebData = await finishScore();  
-          let Isjudge = await mysql.query("SELECT * FROM end_footballscore WHERE matchDate=' "+new Date( new Date().getTime() - 24*60*60*1000 ).Format('yyyy-MM-dd')+" '"); 
+        //  let Isjudge = await mysql.query("SELECT * FROM end_footballscore WHERE matchDate=' "+new Date( new Date().getTime() - 24*60*60*1000 ).Format('yyyy-MM-dd')+" '"); 
           
+          //判断数据库中是否存在重复的数据
+          Isjudge.forEach( (itemArr,index)=>{
+
+          });  
+
           if( Isjudge.length == 0 ){ 
                 let addSql = "INSERT INTO end_footballscore(`league_img`,`league`,`matchDate`,`playTime`,`homeTeam`,`homeTeam_score`,`awayTeam_score`,`awayTeam`,`home_redCard`,`away_redCard`,`home_yellowCard`,`away_yellowCard`,`createTime`) VALUES ?";
                 await mysql.query(addSql,[WebData]);
-
                 console.log("定时任务===>",new Date().Format('yyyy-MM-dd HH:mm:ss'),"成功入库...");    
           }     
           

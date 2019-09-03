@@ -8,19 +8,19 @@ getWebData.schedule()//执行定时任务
 router.get("/", async (ctx, next) => {
     
   // await mysql.query("truncate table end_footballscore");
-  //  let WebData = await getWebData.finishScore();
+    let WebData = await getWebData.finishScore();
 
     //let Isjudge = await mysql.query("SELECT * FROM end_footballscore WHERE matchDate=' "+ WebData[0][2]+" '");
     
  
 
-   let reslut = await mysql.query("SELECT * FROM end_footballscore");
+  // let reslut = await mysql.query("SELECT * FROM end_footballscore");
    console.log("成功入库了")
 
     ctx.response.body =  {
         status:true,
         message:"成功爬取内容",
-        data:reslut
+        data:WebData
     } 
    
     
