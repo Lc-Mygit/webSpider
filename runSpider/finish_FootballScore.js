@@ -65,7 +65,7 @@ const finishScore =  function(){
 //这里是执行 定时 爬取页面的数据，然后判断 入数据库。
 const  scheduleCronstyle =  function(){
     //每分钟的第30秒定时执行一次:
-      schedule.scheduleJob('30 * * * * *', async ()=>{
+      schedule.scheduleJob('59 * * * * *', async ()=>{
       
           let WebData = await finishScore();  
           let Isjudge = await mysql.query("SELECT * FROM end_footballscore WHERE matchDate=' "+new Date( new Date().getTime() - 24*60*60*1000 ).Format('yyyy-MM-dd')+" '"); 
@@ -96,7 +96,7 @@ const  scheduleCronstyle =  function(){
                 await mysql.query(addSql,[WebData]);
            }
 
-        console.log('爬虫定时 任务启动:' + new Date().Format('yyyy-MM-dd HH:mm:ss') );
+        console.log('足球完场比分入库程序启动======>定时任务启动:' + new Date().Format('yyyy-MM-dd HH:mm:ss') );
         
 
       }); 
