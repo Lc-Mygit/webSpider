@@ -6,20 +6,14 @@ const finishScore = require("../runSpider/finish_FootballScore"); //专门写爬
 const todayNews = require("../runSpider/todayNews");//运行今日头条的推荐新闻爬取数据。
 const Basketballscore = require("../runSpider/finish_Basketballscore");//运行篮球完成比分的数据采集
 
-async function AddMsqlData(_addsql,data) {
-    await mysql.query(_addsql,data);
-}
+
 
 //执行向页面发送信息
 router.get("/", async (ctx, next) => {
     
     await mysql.query("truncate table basketballscore");
     let WebData = await Basketballscore();
-    /*let addsql = 'INSERT INTO basketballscore (matchDate,league,homeTeam_img,awayTeam_img,homeTeam,homeTeam_Section1,homeTeam_Section2,homeTeam_Section3,homeTeam_Section4,homeTeam_Total,awayTeam,awayTeam_Section1,awayTeam_Section2,awayTeam_Section3,awayTeam_Section4,awayTeam_Total,halfScore,totalScore,createTime) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
-    WebData.forEach( async (item,index)=>{
-        await AddMsqlData(addsql,item);
-        console.log(index);
-    });*/
+
     let addSql = "INSERT INTO basketballscore(matchDate,league,homeTeam_img,awayTeam_img,homeTeam,homeTeam_Section1,homeTeam_Section2,homeTeam_Section3,homeTeam_Section4,homeTeam_Total,awayTeam,awayTeam_Section1,awayTeam_Section2,awayTeam_Section3,awayTeam_Section4,awayTeam_Total,halfScore,totalScore,createTime) VALUES ?";
     await mysql.query(addSql,[WebData]);
    
