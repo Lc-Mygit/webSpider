@@ -31,7 +31,8 @@ const finishBackballScore =  function(){
             let getArr =[]; //临时存储数据
             $(".layout-grid-list .list-item").each( (index,item)=>{
                 let tempArr = []; 
-
+            //获取赛事的日期
+                tempArr.push( new Date( Number($(item).attr("data-time") ) * 1000 ).Format('yyyy-MM-dd'));    
             //获取比赛日期时间
                 tempArr.push( new Date( Number($(item).attr("data-time") ) * 1000 ).Format('yyyy-MM-dd HH:mm:ss') );
                 //获取赛事名,已经字符串切割解析。
@@ -48,51 +49,25 @@ const finishBackballScore =  function(){
                 let homeTeam = $(item).find(".d-row .r-left .tbody-one .name .lang").text().trim().substring(0,$(item).find(".d-row .r-left .tbody-one .name .lang").text().trim().length/2);
                 tempArr.push(homeTeam);
             //获取主队第一 二 三 四节得分
-                tempArr.push( $(item).find(".d-row .r-left .tbody-one .race-node div.col-4").eq(0).text().trim() );
-                tempArr.push( $(item).find(".d-row .r-left .tbody-one .race-node div.col-4").eq(1).text().trim() );
-                tempArr.push( $(item).find(".d-row .r-left .tbody-one .race-node div.col-4").eq(2).text().trim() );
-                tempArr.push( $(item).find(".d-row .r-left .tbody-one .race-node div.col-4").eq(3).text().trim() );
-                /*$(item).find(".d-row .r-left .tbody-one .race-node div.col-4").each((_index,node)=>{
-                    if( $(node).text() && $(node).text().trim() !== "-" ){ 
-                        tempArr.push( $(node).text().trim() );
-                    }else{
-                        tempArr.push("0");
-                    }
-                });*/
+                tempArr.push( $(item).find(".d-row .r-left .tbody-one .race-node div.float-left").eq(0).text().trim() );
+                tempArr.push( $(item).find(".d-row .r-left .tbody-one .race-node div.float-left").eq(1).text().trim() );
+                tempArr.push( $(item).find(".d-row .r-left .tbody-one .race-node div.float-left").eq(2).text().trim() );
+                tempArr.push( $(item).find(".d-row .r-left .tbody-one .race-node div.float-left").eq(3).text().trim() );
+
             //获取主队总得分    
                 tempArr.push($(item).find(".d-row .r-left .tbody-one b.full-court").text().trim());
-
-                /*if( $(item).find(".d-row .r-left .tbody-one b.full-court").text() &&  $(item).find(".d-row .r-left .tbody-one b.full-court").text().trim() !== "-" ){ 
-                    tempArr.push( $(item).find(".d-row .r-left .tbody-one b.full-court").text().trim());
-                }else{
-                    tempArr.push("")
-                }*/
-               
-          
+     
             //获取客队名字    
                 let awayTeam = $(item).find(".d-row .r-left .tbody-tow .name .lang").text().trim().substring(0,$(item).find(".d-row .r-left .tbody-tow .name .lang").text().trim().length/2);
                 tempArr.push(awayTeam);
             //获取客队 第一 二  四 节得分   
-                tempArr.push( $(item).find(".d-row .r-left .tbody-tow .race-node div.col-4").eq(0).text().trim() );
-                tempArr.push( $(item).find(".d-row .r-left .tbody-tow .race-node div.col-4").eq(1).text().trim() );
-                tempArr.push( $(item).find(".d-row .r-left .tbody-tow .race-node div.col-4").eq(2).text().trim() );
-                tempArr.push( $(item).find(".d-row .r-left .tbody-tow .race-node div.col-4").eq(3).text().trim() );
+                tempArr.push( $(item).find(".d-row .r-left .tbody-tow .race-node div.float-left").eq(0).text().trim() );
+                tempArr.push( $(item).find(".d-row .r-left .tbody-tow .race-node div.float-left").eq(1).text().trim() );
+                tempArr.push( $(item).find(".d-row .r-left .tbody-tow .race-node div.float-left").eq(2).text().trim() );
+                tempArr.push( $(item).find(".d-row .r-left .tbody-tow .race-node div.float-left").eq(3).text().trim() );
 
-                /*$(item).find(".d-row .r-left .tbody-tow .race-node div.col-4").each((_index,node)=>{
-                    if( $(node).text() && $(node).text().trim() !== "-" ){ 
-                        tempArr.push($(node).text().trim());
-                    }else{
-                        tempArr.push("");
-                    }
-                })*/
             //获取客队总得分
                 tempArr.push( $(item).find(".d-row .r-left .tbody-tow b.full-court").text().trim() );
-
-                /*if( $(item).find(".d-row .r-left .tbody-tow b.full-court").text() && $(item).find(".d-row .r-left .tbody-tow b.full-court").text().trim() !== "-" ){ 
-                    //tempArr.push(  $(item).find(".d-row .r-left .tbody-tow b.full-court").text().trim()); 
-                }else{
-                    //tempArr.push("")
-                }*/
 
             //主客队半场得分,字符串截取解析
                 if( $(item).find(".d-row .r-left .tbody-tow .half-score").text() && $(item).find(".d-row .r-left .tbody-tow .half-score").text().trim() ){ 
@@ -115,10 +90,8 @@ const finishBackballScore =  function(){
             //入库日期时间
                 tempArr.push( new Date().Format('yyyy-MM-dd HH:mm:ss'))   
                     
-                   
             //加载到存储的数组       
                 getArr.push(tempArr);
-
             });
            
             resolve(getArr)
@@ -131,19 +104,37 @@ const finishBackballScore =  function(){
 const CollectionTask = function(){
     //每分钟的第30秒定时执行一次:
     schedule.scheduleJob('30 0-59 * * * *', async ()=>{
-       // let WebData = await finishBackballScore();  
-       /* await mysql.query("truncate table end_basketballscore");
-
-        let addSql = "INSERT INTO end_basketballscore(`matchDate`,`league`,`matchDate`,`homeTeam_img`,`awayTeam_img`,`homeTeam`,`homeTeam_Section1`,`homeTeam_Section2`,`homeTeam_Section3`,`homeTeam_Section4`,`homeTeam_Total`,`awayTeam`,`awayTeam_Section1`,`awayTeam_Section2`,`awayTeam_Section3`,`awayTeam_Section4`,`awayTeam_Total`,`HalfScore`,`TotalScore`,`createTime`) VALUES ?"
-        
-        await mysql.query(addSql,[WebData]);
-    */
-        //new Date( new Date().getTime() - 24*60*60*1000 ).Format('yyyy-MM-dd')
-        //let Isjudge = await mysql.query("SELECT * FROM end_basketballscore WHERE matchDate=' "++" '");
-        //console.log(Isjudge.length)
-
-
-        console.log("自动采集篮球完场数据======>",  new Date().Format('yyyy-MM-dd HH:mm:ss') )
+        let WebData = await finishBackballScore();  
+        //await mysql.query("truncate table basketballscore");
+        let tempArr =[];
+        let SQLArr = await mysql.query("SELECT * FROM basketballscore WHERE Date=' "+new Date( new Date().getTime() - 24*60*60*1000 ).Format('yyyy-MM-dd')+" '");
+        if(SQLArr.length === 0){
+            let addSql = "INSERT INTO basketballscore(Date,matchDate,league,homeTeam_img,awayTeam_img,homeTeam,homeTeam_Section1,homeTeam_Section2,homeTeam_Section3,homeTeam_Section4,homeTeam_Total,awayTeam,awayTeam_Section1,awayTeam_Section2,awayTeam_Section3,awayTeam_Section4,awayTeam_Total,halfScore,totalScore,createTime) VALUES ?";
+            await mysql.query(addSql,[WebData]);
+        }else{
+            for(let i=0; i<WebData.length; i++){
+                        let item = WebData[i];
+                        let flag = false;
+                       // console.log(item[0],item[2],item[5],item[11] ,"=====>"+i);
+                        for(let k=0; k<SQLArr.length;k++){
+                                if( item[0] === new Date(SQLArr[k].Date).Format("yyyy-MM-dd") && item[2] === SQLArr[k].league && item[5] === SQLArr[k].homeTeam && item[11] === SQLArr[k].awayTeam ){
+                                    flag = true;
+                                }
+                        }
+                    
+                        //console.log(flag,i)
+                        if(!flag){
+                            tempArr.push(item) 
+                        }
+                } 
+                if( tempArr.length > 0 ){ 
+                    //let delectSql = "DELETE FROM basketballscore WHERE Date=' "+new Date( new Date().getTime() - 24*60*60*1000 ).Format('yyyy-MM-dd')+" '";
+                    //await mysql.query(delectSql);
+                    let addSql = "INSERT INTO basketballscore(Date,matchDate,league,homeTeam_img,awayTeam_img,homeTeam,homeTeam_Section1,homeTeam_Section2,homeTeam_Section3,homeTeam_Section4,homeTeam_Total,awayTeam,awayTeam_Section1,awayTeam_Section2,awayTeam_Section3,awayTeam_Section4,awayTeam_Total,halfScore,totalScore,createTime) VALUES ?";
+                    await mysql.query(addSql,[tempArr]);
+                }
+        }
+        console.log("自动采集篮球完场数据===========================================>", new Date().Format('yyyy-MM-dd HH:mm:ss') )
     })
 }
 //自动爬取启动

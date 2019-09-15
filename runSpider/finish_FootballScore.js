@@ -66,37 +66,34 @@ const finishScore =  function(){
 const  scheduleCronstyle =  function(){
     //每分钟的第30秒定时执行一次:
       schedule.scheduleJob('59 * * * * *', async ()=>{
-      
+        //  await mysql.query("truncate table end_footballscore")
           let WebData = await finishScore();  
-          let Isjudge = await mysql.query("SELECT * FROM end_footballscore WHERE matchDate=' "+new Date( new Date().getTime() - 24*60*60*1000 ).Format('yyyy-MM-dd')+" '"); 
-          
-        //写判断逻辑，判断数据库是否重复的数据。    
-           if( Isjudge.length > 0 ){
-               let TempArr = []; //临时储存的数据
-               WebData.forEach( (itemArr,index)=>{
-                    let flag = false;
-                    Isjudge.forEach( Sqlobj=>{
-                        if( Sqlobj.league == itemArr[1] &&  Sqlobj.matchDate == itemArr[2] && Sqlobj.homeTeam == itemArr[4] && Sqlobj.awayTeam == itemArr[6] ){
-                            flag = true;
-                        }else{
-                            flag = false;
-                        } 
-                    })
-                    if(!flag){
-                        TempArr.push(itemArr)
+          let SQLArr = await mysql.query("SELECT * FROM end_footballscore WHERE matchDate=' "+new Date( new Date().getTime() - 24*60*60*1000 ).Format('yyyy-MM-dd')+" '"); 
+          let tempArr =[];
+        //写判断逻辑，判断数据库是否重复的数据。  
+          if(SQLArr.length === 0){
+            let addSql = "INSERT INTO end_footballscore(`league_img`,`league`,`matchDate`,`playTime`,`homeTeam`,`homeTeam_score`,`awayTeam_score`,`awayTeam`,`home_redCard`,`away_redCard`,`home_yellowCard`,`away_yellowCard`,`createTime`) VALUES ?";
+            await mysql.query(addSql,[WebData]);
+          }else{
+            WebData.forEach( (itemArr,index)=>{
+                let flag = false;
+                SQLArr.forEach( sqlItem=>{
+                    if(sqlItem.league === itemArr[1] && new Date(sqlItem.matchDate).Format("yyyy-MM-dd") === itemArr[2] && sqlItem.homeTeam === itemArr[4] && sqlItem.awayTeam == itemArr[7]){
+                        flag = true;
                     }
-               })
-              
-               if(TempArr.length > 0 ){ 
-                    let addSql = "INSERT INTO end_footballscore(`league_img`,`league`,`matchDate`,`playTime`,`homeTeam`,`homeTeam_score`,`awayTeam_score`,`awayTeam`,`home_redCard`,`away_redCard`,`home_yellowCard`,`away_yellowCard`,`createTime`) VALUES ?";
-                    await mysql.query(addSql,[TempArr]);
-                }   
-           }else{
+                });
+                if(!flag){
+                    tempArr.push(itemArr)
+                }
+            });
+            if( tempArr.length > 0){
                 let addSql = "INSERT INTO end_footballscore(`league_img`,`league`,`matchDate`,`playTime`,`homeTeam`,`homeTeam_score`,`awayTeam_score`,`awayTeam`,`home_redCard`,`away_redCard`,`home_yellowCard`,`away_yellowCard`,`createTime`) VALUES ?";
-                await mysql.query(addSql,[WebData]);
-           }
+                await mysql.query(addSql,[tempArr]);
+            } 
 
-        console.log('足球完场比分入库程序启动======>定时任务启动:' + new Date().Format('yyyy-MM-dd HH:mm:ss') );
+          }
+
+         console.log('自动采集足球完场比分程序启动==============>' + new Date().Format('yyyy-MM-dd HH:mm:ss') );
         
 
       }); 
